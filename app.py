@@ -35,6 +35,14 @@ except ImportError:
     _HAS_SPACES = False
 
 
+# ZeroGPU caps how long a single GPU reservation may last, and adds its own
+# overhead on top of the requested duration. Asking for more than the account's
+# ceiling fails the call outright ("requested GPU duration is larger than the
+# maximum allowed") before any work starts, so the default stays conservative;
+# raise it via the env var on a tier that allows longer slots.
+MAX_GPU_DURATION = int(os.environ.get("PLAYGROUND_GPU_DURATION", "120"))
+
+
 def gpu_task(duration: int = 120):
     """Reserve a ZeroGPU slot for the wrapped handler.
 
@@ -47,7 +55,7 @@ def gpu_task(duration: int = 120):
     def decorator(fn):
         if not _HAS_SPACES:
             return fn
-        return spaces.GPU(duration=duration)(fn)
+        return spaces.GPU(duration=min(duration, MAX_GPU_DURATION))(fn)
 
     return decorator
 
