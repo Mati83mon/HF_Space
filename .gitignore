@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.gradio/
+flagged/
+*.mp4
+*.gif
+*.wav
+*.png
+!assets/*.png
+.DS_Store

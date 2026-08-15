@@ -1,0 +1,28 @@
+# --- core UI + Hub -------------------------------------------------------- #
+gradio>=5.0,<6          # Gradio 6 moved theme/css to launch(); this app targets 5.x
+huggingface_hub>=0.25.0
+
+# --- text / audio --------------------------------------------------------- #
+transformers>=4.44.0
+torch>=2.1.0
+accelerate>=0.33.0
+sentencepiece>=0.2.0
+protobuf>=4.25.0
+
+# --- image / video -------------------------------------------------------- #
+diffusers>=0.31.0
+Pillow>=10.0.0
+numpy>=1.26.0
+safetensors>=0.4.0
+imageio[ffmpeg]>=2.34.0
+opencv-python-headless>=4.9.0
+
+# --- audio i/o ------------------------------------------------------------ #
+soundfile>=0.12.1
+librosa>=0.10.0
+datasets>=2.20.0          # SpeechT5 speaker x-vectors
+
+# --- optional WebSocket backend (PLAYGROUND_ENABLE_WS=1) ------------------- #
+fastapi>=0.110.0
+uvicorn>=0.29.0
+websockets>=12.0

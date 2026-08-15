@@ -1,0 +1,243 @@
+/* ========================================================================== *
+ *  MODEL PLAYGROUND — cyberpunk theme (black / dark grey / neon yellow)
+ *  Loaded by app.py and passed to gr.Blocks(css=...).
+ * ========================================================================== */
+
+:root,
+.gradio-container {
+  --pg-bg: #050505;
+  --pg-panel: #1e1e1e;
+  --pg-panel-alt: #141414;
+  --pg-line: #3c3c3c;
+  --pg-accent: #ffd700;
+  --pg-accent-dim: #ffa800;
+  --pg-danger: #ff4b4b;
+  --pg-text: #e8e8e8;
+  --pg-text-dim: #9a9a9a;
+  --pg-mono: "JetBrains Mono", "IBM Plex Mono", "Fira Code", ui-monospace, monospace;
+}
+
+.gradio-container,
+.gradio-container * {
+  font-family: var(--pg-mono) !important;
+}
+
+.gradio-container {
+  background: var(--pg-bg) !important;
+  color: var(--pg-text) !important;
+  max-width: 1400px !important;
+}
+
+/* ------------------------------ header ---------------------------------- */
+
+#pg-header {
+  border: 1px solid var(--pg-accent);
+  border-radius: 4px;
+  background: linear-gradient(160deg, #0b0b0b 0%, #1a1600 100%);
+  padding: 18px 22px;
+  margin-bottom: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+#pg-header::after {
+  /* faint scanlines */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 215, 0, 0.05) 0px,
+    rgba(255, 215, 0, 0.05) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  pointer-events: none;
+}
+
+#pg-header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--pg-accent);
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.55), 0 0 18px rgba(255, 168, 0, 0.25);
+}
+
+#pg-header p {
+  margin: 6px 0 0;
+  color: var(--pg-text-dim);
+  font-size: 0.85rem;
+}
+
+/* ------------------------------ panels ---------------------------------- */
+
+.gradio-container .block,
+.gradio-container .form,
+.gradio-container .panel {
+  background: var(--pg-panel) !important;
+  border: 1px solid var(--pg-line) !important;
+  border-radius: 3px !important;
+}
+
+.gradio-container label,
+.gradio-container .label-wrap span {
+  color: var(--pg-accent-dim) !important;
+  font-size: 0.78rem !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gradio-container input[type="text"],
+.gradio-container input[type="number"],
+.gradio-container textarea,
+.gradio-container select {
+  background: var(--pg-panel-alt) !important;
+  color: var(--pg-text) !important;
+  border: 1px solid var(--pg-line) !important;
+  border-radius: 2px !important;
+}
+
+.gradio-container input:focus,
+.gradio-container textarea:focus {
+  border-color: var(--pg-accent) !important;
+  box-shadow: 0 0 0 1px var(--pg-accent), 0 0 12px rgba(255, 215, 0, 0.2) !important;
+  outline: none !important;
+}
+
+/* ------------------------------- tabs ----------------------------------- */
+
+.gradio-container .tab-nav button {
+  background: transparent !important;
+  color: var(--pg-text-dim) !important;
+  border: none !important;
+  border-bottom: 2px solid transparent !important;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.8rem !important;
+}
+
+.gradio-container .tab-nav button.selected {
+  color: var(--pg-accent) !important;
+  border-bottom: 2px solid var(--pg-accent) !important;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+/* ------------------------------ buttons --------------------------------- */
+
+.gradio-container button.primary,
+.gradio-container .pg-run button,
+button.pg-run {
+  background: var(--pg-accent) !important;
+  color: #0a0a0a !important;
+  border: 1px solid var(--pg-accent) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.gradio-container button.primary:hover,
+button.pg-run:hover {
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.65), 0 0 30px rgba(255, 168, 0, 0.3) !important;
+  transform: translateY(-1px);
+}
+
+.gradio-container button.secondary {
+  background: var(--pg-panel-alt) !important;
+  color: var(--pg-accent) !important;
+  border: 1px solid var(--pg-accent-dim) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.gradio-container button.secondary:hover {
+  background: #241f00 !important;
+  box-shadow: 0 0 10px rgba(255, 168, 0, 0.35) !important;
+}
+
+button.pg-danger {
+  background: transparent !important;
+  color: var(--pg-danger) !important;
+  border: 1px solid var(--pg-danger) !important;
+}
+
+/* ------------------------------- logs ----------------------------------- */
+
+.pg-log textarea,
+.pg-log input {
+  background: #0a0a0a !important;
+  color: var(--pg-accent-dim) !important;
+  border: 1px solid var(--pg-line) !important;
+  font-size: 0.78rem !important;
+  line-height: 1.45 !important;
+}
+
+.pg-output textarea {
+  background: #0a0a0a !important;
+  color: var(--pg-text) !important;
+  border-left: 3px solid var(--pg-accent) !important;
+}
+
+/* --------------------------- safety banner ------------------------------ */
+
+.pg-warning {
+  border: 1px solid var(--pg-danger) !important;
+  background: #1a0505 !important;
+  color: #ffb3b3 !important;
+  padding: 12px 16px;
+  border-radius: 3px;
+}
+
+.pg-warning strong {
+  color: var(--pg-danger);
+}
+
+.pg-note {
+  border-left: 3px solid var(--pg-accent-dim);
+  background: var(--pg-panel-alt);
+  padding: 10px 14px;
+  color: var(--pg-text-dim);
+  font-size: 0.82rem;
+}
+
+.pg-note h3,
+.pg-note h4 {
+  color: var(--pg-accent);
+  margin: 0 0 6px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+/* ----------------------------- misc bits -------------------------------- */
+
+.gradio-container .slider_input_container input[type="range"] {
+  accent-color: var(--pg-accent);
+}
+
+.gradio-container a {
+  color: var(--pg-accent) !important;
+}
+
+.gradio-container footer {
+  display: none !important;
+}
+
+.gradio-container ::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+.gradio-container ::-webkit-scrollbar-track {
+  background: var(--pg-bg);
+}
+
+.gradio-container ::-webkit-scrollbar-thumb {
+  background: var(--pg-line);
+  border-radius: 0;
+}
+
+.gradio-container ::-webkit-scrollbar-thumb:hover {
+  background: var(--pg-accent-dim);
+}
