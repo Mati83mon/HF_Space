@@ -126,6 +126,14 @@ Environment variables: `HF_TOKEN` (gated repos), `PLAYGROUND_MAX_CACHED_MODELS`,
    | SDXL, FLUX schnell, TTS | T4 small / A10G small |
    | LTX-Video, CogVideoX, HunyuanVideo | A10G large / A100 |
 
+   **ZeroGPU** works too: every inference handler is wrapped in `@gpu_task(...)`
+   (`app.py`), which maps onto `spaces.GPU` when the `spaces` package is present
+   and is a no-op everywhere else, so one code path covers all tiers. Be aware of
+   the trade-off: ZeroGPU runs each call in its own GPU context, so the weight
+   cache does not survive between runs and every request re-materialises the model
+   from the local Hub cache. For repeated iteration on one model, a classic
+   dedicated GPU tier is markedly faster.
+
 5. Add `HF_TOKEN` in **Settings → Secrets** for gated repos (FLUX dev, Llama, …).
 
 ## Repository layout

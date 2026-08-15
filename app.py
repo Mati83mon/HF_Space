@@ -24,6 +24,35 @@ CSS_PATH = APP_DIR / "assets" / "theme.css"
 
 
 # --------------------------------------------------------------------------- #
+# ZeroGPU support
+# --------------------------------------------------------------------------- #
+
+try:
+    import spaces  # pre-installed on ZeroGPU Spaces
+
+    _HAS_SPACES = True
+except ImportError:
+    _HAS_SPACES = False
+
+
+def gpu_task(duration: int = 120):
+    """Reserve a ZeroGPU slot for the wrapped handler.
+
+    On ZeroGPU hardware a GPU only exists for the duration of a `spaces.GPU`
+    call, so every handler that touches a model needs this. The decorator is a
+    no-op both off ZeroGPU (package absent) and on classic CPU/GPU tiers (the
+    package detects it), which keeps a single code path for all hardware.
+    """
+
+    def decorator(fn):
+        if not _HAS_SPACES:
+            return fn
+        return spaces.GPU(duration=duration)(fn)
+
+    return decorator
+
+
+# --------------------------------------------------------------------------- #
 # Theme
 # --------------------------------------------------------------------------- #
 
@@ -109,6 +138,7 @@ def _sampling(temperature, top_p, top_k, max_new_tokens, repetition_penalty, sto
     }
 
 
+@gpu_task(duration=120)
 def text_run(repo_id, task, prompt, temperature, top_p, top_k, max_new_tokens, repetition_penalty, stop_raw, uncensored):
     try:
         loader, handle, spec = _prepare(repo_id, task, "text", uncensored)
@@ -119,6 +149,7 @@ def text_run(repo_id, task, prompt, temperature, top_p, top_k, max_new_tokens, r
         return "", _fmt_error(exc)
 
 
+@gpu_task(duration=120)
 def text_stream(repo_id, task, prompt, temperature, top_p, top_k, max_new_tokens, repetition_penalty, stop_raw, uncensored):
     try:
         loader, handle, spec = _prepare(repo_id, task, "text", uncensored)
@@ -174,6 +205,7 @@ def instruction_render(repo_id, task, system, user, assistant_prefix, tool_json,
         return "", _fmt_error(exc)
 
 
+@gpu_task(duration=120)
 def instruction_run(
     repo_id, task, system, user, assistant_prefix, tool_json,
     temperature, top_p, top_k, max_new_tokens, repetition_penalty, stop_raw, uncensored,
@@ -200,6 +232,7 @@ def instruction_run(
 # --------------------------------------------------------------------------- #
 
 
+@gpu_task(duration=180)
 def image_run(
     repo_id, task, prompt, negative_prompt, steps, guidance, width, height,
     seed, num_images, init_image, strength, uncensored,
@@ -224,6 +257,7 @@ def image_run(
         return None, _fmt_error(exc)
 
 
+@gpu_task(duration=120)
 def audio_run(repo_id, task, text, audio_input, speaker, language, timestamps, uncensored):
     try:
         loader, handle, spec = _prepare(repo_id, task, "audio", uncensored)
@@ -240,6 +274,7 @@ def audio_run(repo_id, task, text, audio_input, speaker, language, timestamps, u
         return None, "", _fmt_error(exc)
 
 
+@gpu_task(duration=300)
 def video_run(
     repo_id, task, prompt, negative_prompt, init_image, num_frames, fps,
     steps, guidance, width, height, seed, output_format, uncensored,
@@ -271,6 +306,7 @@ def video_run(
 # --------------------------------------------------------------------------- #
 
 
+@gpu_task(duration=300)
 def custom_run(repo_id, task, params_json, uncensored):
     """Send raw kwargs straight to whichever loader the repo resolves to."""
     try:

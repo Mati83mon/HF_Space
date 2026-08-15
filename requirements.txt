@@ -1,4 +1,5 @@
 # --- core UI + Hub -------------------------------------------------------- #
+spaces>=0.30.0          # ZeroGPU: @spaces.GPU slots; no-op on other hardware
 gradio>=5.0,<6          # Gradio 6 moved theme/css to launch(); this app targets 5.x
 huggingface_hub>=0.25.0
 
