@@ -684,4 +684,11 @@ if __name__ == "__main__":
         server_name=os.environ.get("GRADIO_SERVER_NAME", "0.0.0.0"),
         server_port=int(os.environ.get("GRADIO_SERVER_PORT", "7860")),
         show_api=True,
+        # Gradio 5's experimental SSR layer sits in front of the app and rejects
+        # the POSTs this UI makes ("405 Method Not Allowed"), so every Run button
+        # failed before reaching Python. Keep it off.
+        ssr_mode=False,
+        # Surface exceptions raised outside our handlers (e.g. GPU scheduling)
+        # instead of a bare "Error" toast with an empty log box.
+        show_error=True,
     )
