@@ -201,6 +201,7 @@ def _build_messages(system: str, user: str, assistant_prefix: str, tool_json: st
     return messages
 
 
+@gpu_task(duration=60)
 def instruction_render(repo_id, task, system, user, assistant_prefix, tool_json, uncensored):
     try:
         loader, handle, spec = _prepare(repo_id, task, "text", uncensored)
