@@ -9,7 +9,7 @@ python_version: "3.10"
 app_file: app.py
 pinned: false
 license: mit
-short_description: Universal HF playground — text, image, audio, video, custom API
+short_description: Universal HF playground for text/image/audio/video
 ---
 
 # ⚡ Model Playground
