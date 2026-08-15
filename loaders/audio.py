@@ -78,7 +78,7 @@ def run_inference(
             kwargs["return_timestamps"] = True
         if params.get("language"):
             kwargs["generate_kwargs"] = {"language": params["language"]}
-        result = pipe(_as_asr_input(audio_input), **kwargs)
+        result = pipe(_as_asr_input(audio_input, _target_sr(pipe)), **kwargs)
         if isinstance(result, dict):
             return None, str(result.get("text", result))
         return None, str(result)
@@ -86,28 +86,70 @@ def run_inference(
     # audio-classification and anything else that returns records
     import json
 
-    result = pipe(_as_asr_input(audio_input) if audio_input is not None else text)
+    result = pipe(_as_asr_input(audio_input, _target_sr(pipe)) if audio_input is not None else text)
     return None, json.dumps(result, indent=2, ensure_ascii=False, default=str)
+
+
+_XVECTOR_REPO = "Matthijs/cmu-arctic-xvectors"
+_XVECTOR_ARCHIVE = "spkrec-xvect.zip"
+_XVECTOR_CACHE: Dict[int, Any] = {}
 
 
 def _speaker_kwargs(handle: ModelHandle, speaker_embedding: Optional[str]) -> Dict[str, Any]:
     """SpeechT5-style models need an x-vector; everything else needs nothing."""
-    model_name = handle.repo_id.lower()
-    if "speecht5" not in model_name:
+    if "speecht5" not in handle.repo_id.lower():
         return {}
+
+    raw = (speaker_embedding or "").strip()
     try:
-        datasets = require("datasets")
-        torch = require("torch")
-        embeddings = datasets.load_dataset(
-            "Matthijs/cmu-arctic-xvectors", split="validation"
-        )
-        index = int(speaker_embedding) if speaker_embedding else 7306
-        vector = torch.tensor(embeddings[index]["xvector"]).unsqueeze(0)
-        return {"forward_params": {"speaker_embeddings": vector}}
+        index = int(raw) if raw else 7306
+    except ValueError:
+        raise UnsupportedModelError(f"Speaker index must be a number, got {raw!r}.")
+
+    try:
+        vector = _load_xvector(index)
+    except UnsupportedModelError:
+        raise
     except Exception as exc:
         raise UnsupportedModelError(
             f"{handle.repo_id} needs speaker embeddings and they could not be fetched: {exc}"
         ) from exc
+    return {"forward_params": {"speaker_embeddings": vector}}
+
+
+def _load_xvector(index: int):
+    """Fetch one CMU-Arctic speaker x-vector, as a (1, 512) tensor.
+
+    The upstream dataset is script-based and `datasets` v3 dropped script
+    support ("Dataset scripts are no longer supported"), so pull the archive
+    straight off the Hub and read the .npy entries here instead.
+    """
+    if index in _XVECTOR_CACHE:
+        return _XVECTOR_CACHE[index]
+
+    import io
+    import zipfile
+
+    import numpy as np
+
+    torch = require("torch")
+    hub = require("huggingface_hub")
+
+    archive_path = hub.hf_hub_download(
+        repo_id=_XVECTOR_REPO,
+        filename=_XVECTOR_ARCHIVE,
+        repo_type="dataset",
+        token=hf_token(),
+    )
+    with zipfile.ZipFile(archive_path) as archive:
+        names = sorted(name for name in archive.namelist() if name.endswith(".npy"))
+        if not names:
+            raise UnsupportedModelError(f"No speaker embeddings found in {_XVECTOR_ARCHIVE}.")
+        payload = archive.read(names[index % len(names)])
+
+    vector = torch.tensor(np.load(io.BytesIO(payload))).reshape(1, -1).float()
+    _XVECTOR_CACHE[index] = vector
+    return vector
 
 
 def _unpack_audio(result: Any) -> Tuple[Any, int]:
@@ -134,20 +176,57 @@ def _unpack_audio(result: Any) -> Tuple[Any, int]:
     return audio, rate
 
 
-def _as_asr_input(audio_input: Any) -> Any:
+def _target_sr(pipe) -> int:
+    """Sample rate the model's feature extractor expects."""
+    extractor = getattr(pipe, "feature_extractor", None)
+    return int(getattr(extractor, "sampling_rate", 16000) or 16000)
+
+
+def _decode_file(path: str, target_sr: int) -> Dict[str, Any]:
+    """Decode an audio file into a mono float32 array.
+
+    Handed a filename, the transformers ASR pipeline shells out to the `ffmpeg`
+    binary, which is not guaranteed to exist in a Space image (and fails with
+    "ffmpeg was not found" when it does not). Decoding in Python via
+    soundfile/librosa keeps the whole path dependency-free.
+    """
+    import numpy as np
+
+    try:
+        import soundfile as sf
+
+        array, rate = sf.read(path, dtype="float32", always_2d=False)
+    except Exception:
+        librosa = require("librosa", "Needed to decode audio files.")
+        array, rate = librosa.load(path, sr=None, mono=True)
+
+    return _to_pipeline_input(np.asarray(array, dtype="float32"), int(rate), target_sr)
+
+
+def _to_pipeline_input(array, rate: int, target_sr: int) -> Dict[str, Any]:
+    """Down-mix to mono, scale to [-1, 1] and resample to what the model wants."""
+    import numpy as np
+
+    array = np.asarray(array, dtype="float32")
+    if array.ndim > 1:
+        array = array.mean(axis=1)
+
+    peak = float(np.max(np.abs(array))) if array.size else 0.0
+    if peak > 1.0:  # int16 samples, e.g. straight from the microphone
+        array = array / 32768.0
+
+    if rate != target_sr:
+        librosa = require("librosa", "Needed to resample audio.")
+        array = librosa.resample(array, orig_sr=rate, target_sr=target_sr)
+
+    return {"array": array, "sampling_rate": target_sr}
+
+
+def _as_asr_input(audio_input: Any, target_sr: int = 16000) -> Any:
     """Accept a filepath, or Gradio's (sample_rate, ndarray) tuple."""
+    if isinstance(audio_input, str):
+        return _decode_file(audio_input, target_sr)
     if isinstance(audio_input, tuple) and len(audio_input) == 2:
         rate, array = audio_input
-        try:
-            import numpy as np
-
-            array = np.asarray(array).astype("float32")
-            peak = float(np.max(np.abs(array))) if array.size else 0.0
-            if peak > 1.0:  # int16 input coming from the microphone
-                array = array / 32768.0
-            if array.ndim > 1:
-                array = array.mean(axis=1)
-        except ImportError:
-            pass
-        return {"array": array, "sampling_rate": int(rate)}
+        return _to_pipeline_input(array, int(rate), target_sr)
     return audio_input

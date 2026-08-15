@@ -19,9 +19,8 @@ imageio[ffmpeg]>=2.34.0
 opencv-python-headless>=4.9.0
 
 # --- audio i/o ------------------------------------------------------------ #
-soundfile>=0.12.1
-librosa>=0.10.0
-datasets>=2.20.0          # SpeechT5 speaker x-vectors
+soundfile>=0.12.1       # decode uploads in Python, so ASR needs no ffmpeg binary
+librosa>=0.10.0         # resample to whatever rate the model expects
 
 # --- optional WebSocket backend (PLAYGROUND_ENABLE_WS=1) ------------------- #
 fastapi>=0.110.0
